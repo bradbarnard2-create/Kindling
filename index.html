@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Kindling — one idea at a time</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ---- Kindling: ideas on paper, on a dark desk, by lamplight ---- */
+  :root{
+    --desk:#14110E;         /* warm espresso-black, not flat black */
+    --desk-edge:#0D0B08;
+    --paper:#F3EBD9;        /* warm card stock */
+    --paper-edge:#E7DCC4;
+    --ink:#221C14;          /* card text */
+    --ink-soft:#5C5240;
+    --gilt:#C8892E;         /* struck-match gold */
+    --gilt-deep:#A66E1F;
+    --taupe:#9A8F7D;        /* muted UI on dark */
+    --taupe-dim:#6A6252;
+    --hair:rgba(243,235,217,.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:radial-gradient(120% 90% at 50% -10%, #1D1913 0%, var(--desk) 45%, var(--desk-edge) 100%);
+    color:var(--taupe);
+    font-family:Inter,-apple-system,system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    display:flex;flex-direction:column;
+    min-height:100dvh;
+    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+    overflow-x:hidden;
+  }
+
+  /* ---------- top bar ---------- */
+  .bar{display:flex;align-items:center;justify-content:space-between;
+    padding:18px 20px 10px;max-width:640px;width:100%;margin:0 auto}
+  .brand{display:flex;align-items:baseline;gap:9px}
+  .mark{color:var(--gilt);font-size:18px;line-height:1;transform:translateY(1px)}
+  .brand h1{font-family:Fraunces;font-weight:600;font-size:20px;color:var(--paper);letter-spacing:.2px}
+  .brand span{font-size:11px;color:var(--taupe-dim);letter-spacing:.4px}
+  .stats{display:flex;align-items:center;gap:8px}
+  .chip{display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;
+    font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+  .streak{background:rgba(200,137,46,.10);border:1px solid rgba(200,137,46,.25);color:var(--gilt)}
+  .streak .flame{filter:saturate(1.1)}
+  .mastery{background:rgba(243,235,217,.06);border:1px solid var(--hair);color:var(--taupe)}
+  .mastery .tick{color:var(--paper);font-weight:700}
+  .gear{background:none;border:none;color:var(--taupe-dim);cursor:pointer;padding:6px;
+    display:flex;align-items:center;transition:color .15s ease}
+  .gear:hover{color:var(--paper)}
+  .gear svg{width:19px;height:19px}
+
+  /* ---------- topics ---------- */
+  .topics{display:flex;gap:8px;overflow-x:auto;padding:8px 20px 4px;max-width:640px;width:100%;margin:0 auto;
+    scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .topics::-webkit-scrollbar{display:none}
+  .pill{flex:0 0 auto;padding:7px 13px;border-radius:999px;font-size:13px;font-weight:500;
+    background:transparent;color:var(--taupe);border:1px solid var(--hair);cursor:pointer;
+    white-space:nowrap;transition:all .15s ease}
+  .pill:hover{border-color:rgba(243,235,217,.28)}
+  .pill.on{background:var(--paper);color:var(--ink);border-color:var(--paper);font-weight:600}
+  .pill.add{color:var(--gilt);border-color:rgba(200,137,46,.3)}
+
+  /* ---------- stage / card ---------- */
+  .stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:14px 20px 8px;width:100%}
+  .card-wrap{width:100%;max-width:520px;perspective:1600px}
+  .card{
+    position:relative;background:linear-gradient(180deg,var(--paper) 0%,var(--paper-edge) 100%);
+    color:var(--ink);border-radius:18px;padding:30px 28px 22px;
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 26px 50px -22px rgba(0,0,0,.75),0 4px 14px -8px rgba(0,0,0,.5);
+    min-height:340px;display:flex;flex-direction:column;
+    transition:transform .34s cubic-bezier(.2,.7,.2,1),opacity .34s ease;
+  }
+  /* faint laid-paper grain */
+  .card::after{content:"";position:absolute;inset:0;border-radius:18px;pointer-events:none;
+    background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(34,28,20,.014) 3px 4px);
+    mix-blend-mode:multiply}
+  .card.out{transform:translateX(var(--dir,-40px)) scale(.97);opacity:0}
+  @media (prefers-reduced-motion:reduce){.card{transition:opacity .2s ease}.card.out{transform:none}}
+
+  .src{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.9px;
+    text-transform:uppercase;color:var(--gilt-deep);margin-bottom:16px}
+  .src .dot{width:4px;height:4px;border-radius:50%;background:var(--gilt);opacity:.6}
+  .src .topic{color:var(--ink-soft);font-weight:500}
+  .insight{font-family:Fraunces;font-weight:500;font-size:26px;line-height:1.24;letter-spacing:-.2px;
+    color:var(--ink);margin-bottom:16px}
+  .elab{font-size:15.5px;line-height:1.6;color:var(--ink-soft);flex:1}
+  .deeper{margin-top:16px;padding-top:16px;border-top:1px solid rgba(34,28,20,.12);
+    font-size:15px;line-height:1.62;color:var(--ink-soft);animation:fade .3s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  .card-actions{display:flex;align-items:center;justify-content:space-between;margin-top:20px}
+  .heart{display:flex;align-items:center;gap:7px;background:none;border:none;cursor:pointer;
+    font-family:Inter;font-size:14px;font-weight:600;color:var(--ink-soft);padding:6px 2px}
+  .heart svg{width:19px;height:19px}
+  .heart.saved{color:var(--gilt-deep)}
+  .heart.saved svg path{fill:var(--gilt);stroke:var(--gilt-deep)}
+  .deep-btn{background:var(--ink);color:var(--paper);border:none;border-radius:999px;
+    padding:9px 16px;font-family:Inter;font-size:13.5px;font-weight:600;cursor:pointer;
+    display:flex;align-items:center;gap:6px;transition:transform .12s ease,background .15s}
+  .deep-btn:hover{background:#000}
+  .deep-btn:active{transform:scale(.97)}
+  .deep-btn:disabled{opacity:.5;cursor:default}
+
+  /* skeleton */
+  .skl{background:linear-gradient(90deg,rgba(34,28,20,.06) 25%,rgba(34,28,20,.11) 37%,rgba(34,28,20,.06) 63%);
+    background-size:400% 100%;animation:shim 1.3s ease infinite;border-radius:6px}
+  @keyframes shim{0%{background-position:100% 0}100%{background-position:-100% 0}}
+
+  /* ---------- nav row ---------- */
+  .nav{display:flex;align-items:center;justify-content:center;gap:22px;padding:16px 0 4px}
+  .arrow{width:44px;height:44px;border-radius:50%;border:1px solid var(--hair);background:transparent;
+    color:var(--paper);cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:all .15s ease}
+  .arrow:hover{border-color:rgba(243,235,217,.32);background:rgba(243,235,217,.04)}
+  .arrow:disabled{opacity:.3;cursor:default}
+  .arrow svg{width:20px;height:20px}
+  .count{font-size:12px;color:var(--taupe-dim);font-variant-numeric:tabular-nums;min-width:52px;text-align:center}
+
+  /* ---------- footer ---------- */
+  .foot{display:flex;justify-content:space-between;align-items:center;
+    padding:10px 20px calc(14px + env(safe-area-inset-bottom));max-width:640px;width:100%;margin:0 auto}
+  .link{background:none;border:none;color:var(--taupe);font-family:Inter;font-size:13.5px;font-weight:500;
+    cursor:pointer;padding:8px 4px;display:flex;align-items:center;gap:7px}
+  .link:hover{color:var(--paper)}
+  .badge{background:rgba(200,137,46,.15);color:var(--gilt);font-size:11px;font-weight:700;
+    border-radius:999px;padding:1px 7px;font-variant-numeric:tabular-nums}
+
+  /* ---------- drawer ---------- */
+  .scrim{position:fixed;inset:0;background:rgba(8,6,4,.6);backdrop-filter:blur(2px);
+    opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:30}
+  .scrim.open{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;left:0;right:0;bottom:0;z-index:40;max-width:640px;margin:0 auto;
+    background:linear-gradient(180deg,#1B1710,#14110E);border-top:1px solid var(--hair);
+    border-radius:20px 20px 0 0;padding:8px 20px calc(24px + env(safe-area-inset-bottom));
+    transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.7,.2,1);
+    max-height:82dvh;display:flex;flex-direction:column}
+  .drawer.open{transform:translateY(0)}
+  .grip{width:38px;height:4px;border-radius:99px;background:var(--taupe-dim);margin:8px auto 14px;opacity:.5}
+  .drawer h2{font-family:Fraunces;font-weight:600;font-size:20px;color:var(--paper);margin-bottom:4px}
+  .drawer .sub{font-size:13px;color:var(--taupe-dim);margin-bottom:16px}
+  .saved-list{overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-bottom:4px}
+  .saved-item{background:var(--paper);color:var(--ink);border-radius:12px;padding:15px 16px}
+  .saved-item .si-src{font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;
+    color:var(--gilt-deep);margin-bottom:7px}
+  .saved-item .si-txt{font-family:Fraunces;font-size:17px;line-height:1.3;color:var(--ink)}
+  .saved-item .si-rm{background:none;border:none;color:var(--ink-soft);font-size:12px;font-weight:600;
+    cursor:pointer;margin-top:9px;padding:2px 0}
+  .empty{text-align:center;color:var(--taupe-dim);font-size:14px;padding:34px 10px;line-height:1.6}
+
+  /* topic editor */
+  .topic-grid{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:16px}
+  .field{display:flex;gap:9px;margin-top:4px}
+  .field input{flex:1;background:rgba(243,235,217,.06);border:1px solid var(--hair);border-radius:11px;
+    padding:12px 14px;color:var(--paper);font-family:Inter;font-size:15px;outline:none}
+  .field input:focus{border-color:rgba(200,137,46,.4)}
+  .field button{background:var(--gilt);color:#1B1207;border:none;border-radius:11px;padding:0 18px;
+    font-weight:700;font-size:14px;cursor:pointer}
+  .done{margin-top:16px;width:100%;background:var(--paper);color:var(--ink);border:none;border-radius:12px;
+    padding:14px;font-family:Inter;font-weight:600;font-size:15px;cursor:pointer}
+  .setnote{font-size:13px;line-height:1.5;color:var(--taupe);margin-top:12px}
+  .setnote.dim{color:var(--taupe-dim);font-size:12px}
+  .setnote.ok{color:#7fae63}
+  .seg{display:flex;gap:6px;background:rgba(243,235,217,.05);border:1px solid var(--hair);
+    border-radius:12px;padding:4px;margin-bottom:12px}
+  .seg-btn{flex:1;background:none;border:none;color:var(--taupe);font-family:Inter;font-size:13.5px;
+    font-weight:600;padding:9px;border-radius:9px;cursor:pointer;transition:all .15s ease}
+  .seg-btn.on{background:var(--paper);color:var(--ink)}
+  .model-in{width:100%;background:rgba(243,235,217,.06);border:1px solid var(--hair);border-radius:11px;
+    padding:11px 14px;color:var(--paper);font-family:Inter;font-size:14px;outline:none;margin-top:9px}
+  .model-in:focus{border-color:rgba(200,137,46,.4)}
+  .model-in::placeholder{color:var(--taupe-dim)}
+
+  /* right-side action group + button variants */
+  .act-right{display:flex;align-items:center;gap:9px}
+  .ghost-btn{background:none;border:1px solid rgba(34,28,20,.18);color:var(--ink-soft);
+    border-radius:999px;padding:9px 15px;font-family:Inter;font-size:13.5px;font-weight:600;cursor:pointer;
+    transition:all .14s ease}
+  .ghost-btn:hover{border-color:rgba(34,28,20,.35);color:var(--ink)}
+  .ghost-btn:disabled{opacity:.5;cursor:default}
+
+  /* quiz panel (lives inside the card) */
+  .quiz{margin-top:18px;padding-top:18px;border-top:1px solid rgba(34,28,20,.12);animation:fade .3s ease}
+  .quiz .q{font-family:Fraunces;font-weight:500;font-size:18px;line-height:1.34;color:var(--ink);margin-bottom:14px}
+  .opts{display:flex;flex-direction:column;gap:8px}
+  .opt{text-align:left;background:rgba(34,28,20,.04);border:1px solid rgba(34,28,20,.12);
+    border-radius:11px;padding:12px 14px;font-family:Inter;font-size:14.5px;color:var(--ink);
+    cursor:pointer;transition:all .14s ease;display:flex;align-items:center;gap:10px}
+  .opt:hover:not(:disabled){border-color:rgba(34,28,20,.3);background:rgba(34,28,20,.06)}
+  .opt:disabled{cursor:default}
+  .opt .k{font-size:11px;font-weight:700;color:var(--ink-soft);width:16px;flex:0 0 auto}
+  .opt.correct{background:rgba(67,120,66,.14);border-color:#4e8a4c;color:#1f4a1e}
+  .opt.correct .k{color:#4e8a4c}
+  .opt.wrong{background:rgba(168,58,40,.10);border-color:#b4503c;color:#7a2c1c}
+  .opt.wrong .k{color:#b4503c}
+  .why{margin-top:12px;font-size:14px;line-height:1.55;color:var(--ink-soft)}
+  .why b{color:var(--ink);font-weight:600}
+  .quiz-next{margin-top:14px;width:100%;background:var(--ink);color:var(--paper);border:none;
+    border-radius:11px;padding:12px;font-family:Inter;font-weight:600;font-size:14.5px;cursor:pointer}
+
+  /* error */
+  .err{text-align:center;color:var(--ink-soft);padding:20px 4px}
+  .err b{color:var(--ink);font-family:Fraunces;font-weight:600;font-size:19px;display:block;margin-bottom:8px}
+  .retry{margin-top:16px;background:var(--ink);color:var(--paper);border:none;border-radius:999px;
+    padding:11px 22px;font-family:Inter;font-weight:600;font-size:14px;cursor:pointer}
+</style>
+</head>
+<body>
+  <div class="bar">
+    <div class="brand">
+      <span class="mark">✦</span>
+      <div>
+        <h1>Kindling</h1>
+        <span>one idea at a time</span>
+      </div>
+    </div>
+    <div class="stats">
+      <button class="gear" id="openSettings" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+      <div class="chip mastery" id="mastery" title="Ideas you got right in a quiz">
+        <span class="tick">✓</span><span id="masteryN">0</span>
+      </div>
+      <div class="chip streak" id="streak" title="Days in a row">
+        <span class="flame">🔥</span><span id="streakN">0</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="topics" id="topics"></div>
+
+  <div class="stage">
+    <div class="card-wrap">
+      <div class="card" id="card"><!-- filled by JS --></div>
+    </div>
+    <div class="nav">
+      <button class="arrow" id="prev" aria-label="Previous idea">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="count" id="count">—</div>
+      <button class="arrow" id="next" aria-label="Next idea">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="foot">
+    <button class="link" id="openSaved">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      Saved <span class="badge" id="savedN">0</span>
+    </button>
+    <button class="link" id="openTopics">Topics &nbsp;+</button>
+  </div>
+
+  <!-- Saved drawer -->
+  <div class="scrim" id="scrimS"></div>
+  <div class="drawer" id="drawerS">
+    <div class="grip"></div>
+    <h2>Saved ideas</h2>
+    <div class="sub">The ones you kept.</div>
+    <div class="saved-list" id="savedList"></div>
+  </div>
+
+  <!-- Topics drawer -->
+  <div class="scrim" id="scrimT"></div>
+  <div class="drawer" id="drawerT">
+    <div class="grip"></div>
+    <h2>Your topics</h2>
+    <div class="sub">Tap to toggle. Add your own — anything you want to think about.</div>
+    <div class="topic-grid" id="topicGrid"></div>
+    <div class="field">
+      <input id="newTopic" placeholder="e.g. Songwriting, Stoicism, Faith…" maxlength="40" />
+      <button id="addTopic">Add</button>
+    </div>
+    <button class="done" id="doneTopics">Done</button>
+  </div>
+
+  <!-- Settings drawer -->
+  <div class="scrim" id="scrimSet"></div>
+  <div class="drawer" id="drawerSet">
+    <div class="grip"></div>
+    <h2>Connect the idea well</h2>
+    <div class="sub">Pick a provider and paste your key. It's stored only on this device and never leaves it.</div>
+    <div class="seg" id="providerSeg">
+      <button class="seg-btn on" data-p="anthropic">Anthropic (Claude)</button>
+      <button class="seg-btn" data-p="openai">OpenAI (GPT)</button>
+    </div>
+    <div class="field">
+      <input id="apiKey" type="password" placeholder="sk-ant-…" autocomplete="off" autocapitalize="off" spellcheck="false" />
+      <button id="saveKey">Save</button>
+    </div>
+    <input id="modelIn" class="model-in" placeholder="model (optional)" autocomplete="off" autocapitalize="off" spellcheck="false" />
+    <input id="serverIn" class="model-in" placeholder="server endpoint (optional) — e.g. /.netlify/functions/ai" autocomplete="off" autocapitalize="off" spellcheck="false" />
+    <div class="setnote" id="keyStatus"></div>
+    <div class="setnote dim" id="keyHint"></div>
+    <button class="done" id="doneSet">Done</button>
+    <div class="setnote dim" id="ver" style="text-align:center;margin-top:10px"></div>
+  </div>
+
+<script>
+/* ============================================================
+   KINDLING  —  single-file, vanilla JS
+   Config
+   ============================================================ */
+
+// Kindling talks to whichever provider you give it a key for. In claude.ai's
+// native Artifacts runtime the Anthropic call works with no key; everywhere else
+// (phone, Netlify, file preview) you paste your own key in settings and it's
+// stored on-device. For a PUBLIC app, don't ship a key in the client — point
+// these endpoints at a server function instead (ask Claude to build it).
+const ENDPOINTS = {
+  anthropic: "https://api.anthropic.com/v1/messages",
+  openai:    "https://api.openai.com/v1/chat/completions"
+};
+const DEFAULT_MODEL = {
+  anthropic: "claude-sonnet-5",   // swap to claude-haiku-4-5 for cheaper/faster
+  openai:    "gpt-4o-mini"        // swap to gpt-4o (or any model your key can use)
+};
+const BATCH = 5;          // cards per generation
+const PREFETCH_AT = 2;    // when this many remain, fetch more
+const KINDLING_VERSION = "1.1";
+
+let PROVIDER = "openai";      // "anthropic" | "openai"
+let API_KEY  = "";            // key for the current provider (direct mode)
+let MODEL    = "";            // optional override; blank = provider default
+const DEFAULT_SERVER = "/.netlify/functions/ai";  // baked in: visitors need zero setup
+let SERVER_URL = DEFAULT_SERVER; // proxy endpoint; key lives on the server, not the device
+const keyName = p => "kindling.key." + p;
+
+// One call to rule them all. Returns the model's plain-text reply.
+async function callAI(system, user, maxTokens){
+  const model = MODEL || DEFAULT_MODEL[PROVIDER];
+
+  // Server mode: hand the prompt to your proxy, which holds the key.
+  if(SERVER_URL){
+    const r = await fetch(SERVER_URL, {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({system, user, maxTokens, provider:PROVIDER, model})
+    });
+    const d = await r.json().catch(()=>({}));
+    if(!r.ok || d.error) throw new Error(d.error || ("HTTP "+r.status));
+    return (d.text||"").trim();
+  }
+
+  // Direct mode: call the provider from the browser with your on-device key.
+  let headers, body;
+  if(PROVIDER === "openai"){
+    headers = {"Content-Type":"application/json","Authorization":"Bearer "+API_KEY};
+    const msgs = [];
+    if(system) msgs.push({role:"system", content:system});
+    msgs.push({role:"user", content:user});
+    body = {model, max_tokens:maxTokens, messages:msgs};
+  } else {
+    headers = {
+      "Content-Type":"application/json",
+      "x-api-key":API_KEY,
+      "anthropic-version":"2023-06-01",
+      "anthropic-dangerous-direct-browser-access":"true"
+    };
+    body = {model, max_tokens:maxTokens, messages:[{role:"user", content:user}]};
+    if(system) body.system = system;
+  }
+  const res = await fetch(ENDPOINTS[PROVIDER], {method:"POST", headers, body:JSON.stringify(body)});
+  if(!res.ok) throw new Error("HTTP "+res.status);
+  const data = await res.json();
+  let text;
+  if(PROVIDER === "openai") text = data.choices?.[0]?.message?.content || "";
+  else text = (data.content||[]).map(b=>b.type==="text"?b.text:"").join("");
+  return text.trim();
+}
+
+const PRESET_TOPICS = [
+  "Sales psychology","Persuasion","Focus & ADHD","Creativity",
+  "Faith & meaning","Stoicism","Money","Leadership","Habits","Storytelling"
+];
+const DEFAULT_ON = ["Sales psychology","Focus & ADHD","Creativity","Faith & meaning"];
+
+/* ---------- storage shim: window.storage in-artifact, localStorage standalone ---------- */
+const store = {
+  async get(k){
+    try{
+      if(typeof window!=="undefined" && window.storage){
+        const r = await window.storage.get(k, false); return r ? r.value : null;
+      }
+    }catch(e){}
+    try{ return localStorage.getItem(k); }catch(e){ return null; }
+  },
+  async set(k,v){
+    try{
+      if(typeof window!=="undefined" && window.storage){
+        await window.storage.set(k, v, false); return;
+      }
+    }catch(e){}
+    try{ localStorage.setItem(k,v); }catch(e){}
+  }
+};
+const jget = async (k,f)=>{ const v=await store.get(k); if(v==null) return f; try{return JSON.parse(v);}catch(e){return f;} };
+const jset = (k,v)=> store.set(k, JSON.stringify(v));
+
+/* ---------- state ---------- */
+const state = {
+  topics: new Set(DEFAULT_ON),
+  queue: [],        // {insight, source, topic, elaboration, deeper?}
+  idx: 0,
+  saved: [],
+  mastery: 0,
+  fromFile: false,
+  loading: false
+};
+
+/* ---------- els ---------- */
+const $ = s=>document.querySelector(s);
+const card=$("#card"), countEl=$("#count"), streakN=$("#streakN"), savedN=$("#savedN"), masteryN=$("#masteryN");
+
+/* ============================================================
+   AI generation
+   ============================================================ */
+async function generateCards(){
+  const topics = [...state.topics];
+  const pick = topics.length ? topics : PRESET_TOPICS.slice(0,4);
+  const seen = state.queue.map(c=>c.insight).slice(-12);
+
+  const sys = "You write single-idea knowledge cards, like a sharp friend distilling the best books. "
+    + "Return ONLY a JSON array, no prose, no markdown fences. Each element: "
+    + '{"insight": string, "source": string, "topic": string, "elaboration": string}. '
+    + "insight = one memorable, self-contained idea in your OWN words (max ~24 words). "
+    + "source = the book, thinker, or field it draws from (e.g. \"Robert Cialdini, Influence\"). "
+    + "topic = which of the requested topics it fits. "
+    + "elaboration = 2 tight sentences making it concrete and usable. "
+    + "Paraphrase original ideas; never quote copyrighted text verbatim. Vary sources. Be specific, not generic.";
+
+  const usr = `Give me ${BATCH} fresh idea cards across these topics: ${pick.join(", ")}. `
+    + (seen.length ? `Do NOT repeat these ideas: ${seen.join(" | ")}. ` : "")
+    + "Mix the topics. Favor counterintuitive, practical, well-earned insights.";
+
+  let text = await callAI(sys, usr, 1000);
+  text = text.replace(/```json/gi,"").replace(/```/g,"").trim();
+  const arr = JSON.parse(text);
+  return arr.filter(c=>c && c.insight && c.source && c.elaboration);
+}
+
+function canLive(){ return !!(API_KEY || SERVER_URL); }
+
+// Load a pre-generated cards.json sitting next to index.html (from the Factory).
+async function loadStash(){
+  try{
+    const r = await fetch("cards.json", {cache:"no-store"});
+    if(!r.ok) return false;
+    const arr = await r.json();
+    if(!Array.isArray(arr) || !arr.length) return false;
+    // shuffle so every session opens differently
+    for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+    state.queue = arr.filter(c=>c && c.insight && c.source && c.elaboration);
+    state.fromFile = state.queue.length>0;
+    state.idx = 0;
+    return state.fromFile;
+  }catch(e){ return false; }
+}
+
+async function ensureCards(force){
+  if(state.loading) return;
+
+  // No live capability: run entirely off the loaded stash (or ask for a key).
+  if(!canLive()){
+    if(state.queue.length){ if(force) state.idx = 0; renderCard(); }
+    else renderError();
+    return;
+  }
+
+  if(!force && state.queue.length - state.idx > PREFETCH_AT) return;
+  state.loading = true;
+  if(force && !state.queue.length) renderLoading();
+  try{
+    const fresh = await generateCards();
+    if(force && !state.fromFile){ state.queue = fresh; state.idx = 0; }
+    else state.queue = state.queue.concat(fresh);
+    renderCard();
+  }catch(e){
+    if(force && !state.queue.length) renderError();
+  }finally{
+    state.loading = false;
+  }
+}
+
+/* ============================================================
+   Rendering
+   ============================================================ */
+function heartSVG(){
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 1 0-7.8 7.8l1.1 1L12 21l7.7-7.6 1.1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>';
+}
+function isSaved(c){ return state.saved.some(s=>s.insight===c.insight); }
+
+function renderCard(){
+  const c = state.queue[state.idx];
+  if(!c){ renderLoading(); return; }
+  const saved = isSaved(c);
+  card.innerHTML = `
+    <div class="src"><span>${esc(c.source)}</span><span class="dot"></span><span class="topic">${esc(c.topic||"")}</span></div>
+    <div class="insight">${esc(c.insight)}</div>
+    <div class="elab">${esc(c.elaboration)}</div>
+    ${c.deeper ? `<div class="deeper">${esc(c.deeper)}</div>` : ``}
+    <div class="card-actions">
+      <button class="heart ${saved?'saved':''}" id="heart">${heartSVG()}<span>${saved?'Saved':'Save'}</span></button>
+      <div class="act-right">
+        <button class="ghost-btn" id="deep" ${c.deeper?'disabled':''}>${c.deeper?'Deepened':'Deeper'}</button>
+        <button class="deep-btn" id="quiz">Check yourself</button>
+      </div>
+    </div>
+    <div id="quizPanel"></div>`;
+  $("#heart").onclick = toggleSave;
+  $("#deep").onclick = goDeeper;
+  $("#quiz").onclick = startQuiz;
+  if(c.quiz) renderQuiz(c);   // keep quiz state when flipping back
+  countEl.textContent = `${state.idx+1} / ${state.queue.length}`;
+  $("#prev").disabled = state.idx===0;
+}
+
+function renderLoading(){
+  card.innerHTML = `
+    <div class="src"><span class="skl" style="width:150px;height:11px;display:inline-block"></span></div>
+    <div class="skl" style="height:26px;width:92%;margin-bottom:12px"></div>
+    <div class="skl" style="height:26px;width:70%;margin-bottom:22px"></div>
+    <div class="skl" style="height:15px;width:100%;margin-bottom:9px"></div>
+    <div class="skl" style="height:15px;width:85%"></div>`;
+  countEl.textContent = "…";
+}
+
+function renderError(){
+  const needKey = !API_KEY && !SERVER_URL;
+  card.innerHTML = `
+    <div class="err">
+      <b>${needKey ? "Add your API key to begin." : "Couldn't reach the idea well."}</b>
+      ${needKey
+        ? "Kindling needs your Anthropic API key to pull live ideas. It stays on this device."
+        : "Check your connection and try again."}
+      <div><button class="retry" id="retry">${needKey ? "Add API key" : "Try again"}</button></div>
+    </div>`;
+  $("#retry").onclick = needKey ? openSettings : (()=>ensureCards(true));
+  countEl.textContent = "—";
+}
+
+/* ============================================================
+   Actions
+   ============================================================ */
+function advance(dir){
+  const c = state.queue[state.idx];
+  if(!c) return;
+  card.style.setProperty("--dir", dir>0 ? "-40px" : "40px");
+  card.classList.add("out");
+  setTimeout(()=>{
+    state.idx = state.idx + dir;
+    if(state.idx < 0) state.idx = 0;
+    if(state.idx >= state.queue.length){
+      if(state.fromFile && !canLive()) state.idx = 0;                 // loop the offline stash
+      else state.idx = Math.max(0, state.queue.length - 1);           // hold; live fetch will extend
+    }
+    renderCard();
+    card.classList.remove("out");
+    if(dir>0 && canLive()) ensureCards(false);
+  }, 200);
+}
+
+async function toggleSave(){
+  const c = state.queue[state.idx];
+  if(!c) return;
+  if(isSaved(c)) state.saved = state.saved.filter(s=>s.insight!==c.insight);
+  else state.saved.unshift({insight:c.insight,source:c.source,topic:c.topic,elaboration:c.elaboration});
+  await jset("kindling.saved", state.saved);
+  savedN.textContent = state.saved.length;
+  renderCard();
+}
+
+async function goDeeper(){
+  const c = state.queue[state.idx];
+  if(!c || c.deeper) return;
+  if(!canLive()){
+    c.deeper = "Going deeper needs a live connection — add a key in settings.";
+    renderCard(); return;
+  }
+  const btn = $("#deep"); btn.disabled=true; btn.textContent="…";
+  try{
+    c.deeper = await callAI(null,
+      `Idea: "${c.insight}" (from ${c.source}). In 2-3 sentences, go one level deeper: `
+      +`the mechanism behind it, or exactly how to apply it. Own words, no quotes, no preamble.`, 400)
+      || "No deeper read available right now.";
+  }catch(e){
+    c.deeper = "Couldn't load a deeper read — check your connection or key.";
+  }
+  renderCard();
+}
+
+/* ---------- quiz: active recall ---------- */
+async function startQuiz(){
+  const c = state.queue[state.idx];
+  if(!c) return;
+  if(c.quiz){ renderQuiz(c); return; }          // baked-in (works offline) or already generated
+  const panel = document.getElementById("quizPanel");
+  if(!canLive()){
+    panel.innerHTML=`<div class="quiz"><div class="why">This idea didn't come with a quiz. Add a key in settings for live quizzes, or generate a stash with quizzes baked in.</div></div>`;
+    return;
+  }
+  panel.innerHTML = `<div class="quiz"><div class="q skl" style="height:18px;width:80%"></div>
+    <div class="opts">${'<div class="skl" style="height:44px;border-radius:11px"></div>'.repeat(3)}</div></div>`;
+  try{
+    const quizSys = 'Return ONLY JSON, no fences: {"question":string,"options":[string,string,string],'
+      +'"correct":number,"why":string}. Write a single active-recall question that checks whether the '
+      +'reader understood the idea. 3 plausible options, exactly one correct (correct = its index 0-2). '
+      +'why = one sentence explaining the right answer. Keep options short and distinct.';
+    let t = await callAI(quizSys, `Idea: "${c.insight}" — ${c.elaboration} (from ${c.source}).`, 400);
+    t = t.replace(/```json/gi,"").replace(/```/g,"").trim();
+    const q=JSON.parse(t);
+    if(!q||!q.options||q.options.length<2) throw new Error("bad quiz");
+    c.quiz=q; c.answered=null;
+    renderQuiz(c);
+  }catch(e){
+    panel.innerHTML=`<div class="quiz"><div class="why">Couldn't build a quiz for this one — try the next idea.</div></div>`;
+  }
+}
+
+function renderQuiz(c){
+  const panel=document.getElementById("quizPanel"); if(!panel) return;
+  const q=c.quiz; const done=c.answered!=null;
+  const letters=["A","B","C","D"];
+  panel.innerHTML=`<div class="quiz">
+    <div class="q">${esc(q.question)}</div>
+    <div class="opts">${q.options.map((o,i)=>{
+      let cls="opt";
+      if(done){ if(i===q.correct) cls+=" correct"; else if(i===c.answered) cls+=" wrong"; }
+      return `<button class="${cls}" data-i="${i}" ${done?'disabled':''}>
+        <span class="k">${letters[i]}</span><span>${esc(o)}</span></button>`;
+    }).join("")}</div>
+    ${done?`<div class="why"><b>${c.answered===q.correct?'Locked in.':'Not quite.'}</b> ${esc(q.why||"")}</div>
+      <button class="quiz-next" id="qnext">Next idea →</button>`:``}
+  </div>`;
+  if(!done){
+    panel.querySelectorAll(".opt").forEach(btn=>{
+      btn.onclick=()=>answerQuiz(c, parseInt(btn.dataset.i,10));
+    });
+  }else{
+    const nx=document.getElementById("qnext"); if(nx) nx.onclick=()=>advance(1);
+  }
+}
+
+async function answerQuiz(c, i){
+  c.answered=i;
+  if(i===c.quiz.correct){
+    state.mastery++; masteryN.textContent=state.mastery;
+    await jset("kindling.mastery", state.mastery);
+    document.getElementById("mastery").animate(
+      [{transform:"scale(1)"},{transform:"scale(1.14)"},{transform:"scale(1)"}],{duration:280});
+  }
+  renderQuiz(c);
+}
+
+/* ---------- topics ---------- */
+function renderTopicPills(){
+  const wrap=$("#topics"); wrap.innerHTML="";
+  [...state.topics].forEach(t=>{
+    const b=document.createElement("button"); b.className="pill on"; b.textContent=t;
+    b.onclick=()=>{ toggleTopic(t); };
+    wrap.appendChild(b);
+  });
+  const add=document.createElement("button");
+  add.className="pill add"; add.textContent="+ topics";
+  add.onclick=openTopics; wrap.appendChild(add);
+}
+function renderTopicGrid(){
+  const g=$("#topicGrid"); g.innerHTML="";
+  const all=[...new Set([...PRESET_TOPICS,...state.topics])];
+  all.forEach(t=>{
+    const b=document.createElement("button");
+    b.className="pill "+(state.topics.has(t)?"on":""); b.textContent=t;
+    b.onclick=()=>{ toggleTopic(t); renderTopicGrid(); };
+    g.appendChild(b);
+  });
+}
+function toggleTopic(t){
+  if(state.topics.has(t)){ if(state.topics.size>1) state.topics.delete(t); }
+  else state.topics.add(t);
+  jset("kindling.topics",[...state.topics]);
+  renderTopicPills();
+}
+
+/* ---------- saved drawer ---------- */
+function renderSaved(){
+  const list=$("#savedList");
+  if(!state.saved.length){ list.innerHTML=`<div class="empty">Nothing saved yet.<br>Tap the heart on an idea to keep it.</div>`; return; }
+  list.innerHTML="";
+  state.saved.forEach((s,i)=>{
+    const d=document.createElement("div"); d.className="saved-item";
+    d.innerHTML=`<div class="si-src">${esc(s.source)}</div>
+      <div class="si-txt">${esc(s.insight)}</div>
+      <button class="si-rm" data-i="${i}">Remove</button>`;
+    d.querySelector(".si-rm").onclick=async()=>{
+      state.saved.splice(i,1); await jset("kindling.saved",state.saved);
+      savedN.textContent=state.saved.length; renderSaved(); renderCard();
+    };
+    list.appendChild(d);
+  });
+}
+
+/* ---------- drawers open/close ---------- */
+function openDrawer(s,d){ $(s).classList.add("open"); $(d).classList.add("open"); }
+function closeDrawer(s,d){ $(s).classList.remove("open"); $(d).classList.remove("open"); }
+function openSaved(){
+  const sub=document.querySelector("#drawerS .sub");
+  if(sub) sub.textContent = state.mastery>0
+    ? `The ones you kept · ${state.mastery} idea${state.mastery===1?'':'s'} locked in`
+    : "The ones you kept.";
+  renderSaved(); openDrawer("#scrimS","#drawerS");
+}
+function openSettings(){
+  document.querySelectorAll("#providerSeg .seg-btn").forEach(b=>
+    b.classList.toggle("on", b.dataset.p===PROVIDER));
+  const inp=document.getElementById("apiKey"); if(inp){ inp.value=API_KEY||""; inp.placeholder = PROVIDER==="openai"?"sk-…":"sk-ant-…"; }
+  const m=document.getElementById("modelIn"); if(m) m.value = MODEL || "";
+  const s=document.getElementById("serverIn"); if(s) s.value = SERVER_URL || "";
+  updateHint(); showKeyStatus();
+  openDrawer("#scrimSet","#drawerSet");
+}
+function updateHint(){
+  const el=document.getElementById("keyHint"); if(!el) return;
+  const m=document.getElementById("modelIn"); if(m) m.placeholder = "model — default "+DEFAULT_MODEL[PROVIDER];
+  el.textContent = PROVIDER==="openai"
+    ? "Get a key at platform.openai.com → API keys. Default model: "+DEFAULT_MODEL.openai+"."
+    : "Get a key at console.anthropic.com → API Keys. Default model: "+DEFAULT_MODEL.anthropic+".";
+}
+function showKeyStatus(){
+  const el=document.getElementById("keyStatus"); if(!el) return;
+  if(SERVER_URL){ el.className="setnote ok"; el.textContent="Server mode — key stays on your server. Ideas are live."; return; }
+  if(API_KEY){ el.className="setnote ok"; el.textContent="Key saved. Ideas are live on "+(PROVIDER==="openai"?"OpenAI":"Claude")+"."; }
+  else{ el.className="setnote"; el.textContent="No key yet — add a key, or a server endpoint below."; }
+}
+async function switchProvider(p){
+  if(p===PROVIDER) return;
+  PROVIDER=p;
+  await store.set("kindling.provider", p);
+  API_KEY = (await store.get(keyName(p))) || "";
+  document.querySelectorAll("#providerSeg .seg-btn").forEach(b=>b.classList.toggle("on", b.dataset.p===p));
+  const inp=document.getElementById("apiKey"); if(inp){ inp.value=API_KEY||""; inp.placeholder = p==="openai"?"sk-…":"sk-ant-…"; }
+  updateHint(); showKeyStatus();
+}
+async function saveKey(){
+  const inp=document.getElementById("apiKey");
+  API_KEY = (inp.value||"").trim();
+  const m=document.getElementById("modelIn");
+  MODEL = (m && m.value.trim()) || "";
+  const s=document.getElementById("serverIn");
+  SERVER_URL = (s && s.value.trim()) || "";
+  await store.set(keyName(PROVIDER), API_KEY);
+  await store.set("kindling.model."+PROVIDER, MODEL);
+  await store.set("kindling.server", SERVER_URL);
+  showKeyStatus();
+  if(API_KEY || SERVER_URL) ensureCards(true);   // immediately try to load ideas
+}
+function openTopics(){ renderTopicGrid(); openDrawer("#scrimT","#drawerT"); }
+
+/* ---------- streak ---------- */
+async function bumpStreak(){
+  const today = new Date().toISOString().slice(0,10);
+  const s = await jget("kindling.streak",{count:0,last:null});
+  if(s.last===today){/* already counted */}
+  else{
+    const y = new Date(Date.now()-864e5).toISOString().slice(0,10);
+    s.count = (s.last===y) ? s.count+1 : 1;
+    s.last = today;
+    await jset("kindling.streak",s);
+  }
+  streakN.textContent = s.count;
+}
+
+/* ---------- util ---------- */
+function esc(x){ return String(x==null?"":x).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m])); }
+
+/* ============================================================
+   Wire up + init
+   ============================================================ */
+$("#next").onclick=()=>advance(1);
+$("#prev").onclick=()=>advance(-1);
+$("#openSaved").onclick=openSaved;
+$("#openTopics").onclick=openTopics;
+$("#openSettings").onclick=openSettings;
+$("#scrimS").onclick=()=>closeDrawer("#scrimS","#drawerS");
+$("#scrimT").onclick=()=>closeDrawer("#scrimT","#drawerT");
+$("#scrimSet").onclick=()=>closeDrawer("#scrimSet","#drawerSet");
+$("#doneSet").onclick=()=>closeDrawer("#scrimSet","#drawerSet");
+$("#saveKey").onclick=saveKey;
+$("#apiKey").addEventListener("keydown",e=>{ if(e.key==="Enter") saveKey(); });
+document.querySelectorAll("#providerSeg .seg-btn").forEach(b=>{
+  b.onclick=()=>switchProvider(b.dataset.p);
+});
+$("#doneTopics").onclick=()=>{ closeDrawer("#scrimT","#drawerT"); ensureCards(true); };
+$("#addTopic").onclick=addTopicFromField;
+$("#newTopic").addEventListener("keydown",e=>{ if(e.key==="Enter") addTopicFromField(); });
+function addTopicFromField(){
+  const inp=$("#newTopic"); const v=inp.value.trim(); if(!v) return;
+  state.topics.add(v); jset("kindling.topics",[...state.topics]);
+  inp.value=""; renderTopicGrid(); renderTopicPills();
+}
+// swipe on the card
+let sx=0;
+card.addEventListener("touchstart",e=>sx=e.touches[0].clientX,{passive:true});
+card.addEventListener("touchend",e=>{
+  const dx=e.changedTouches[0].clientX-sx;
+  if(dx<-50) advance(1); else if(dx>50 && state.idx>0) advance(-1);
+},{passive:true});
+// keyboard
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowRight") advance(1);
+  else if(e.key==="ArrowLeft" && state.idx>0) advance(-1);
+});
+
+(async function init(){
+  PROVIDER = (await store.get("kindling.provider")) || "openai";
+  API_KEY  = (await store.get(keyName(PROVIDER))) || "";
+  MODEL    = (await store.get("kindling.model."+PROVIDER)) || "";
+  SERVER_URL = (await store.get("kindling.server")) || DEFAULT_SERVER;
+  const savedTopics = await jget("kindling.topics",null);
+  if(savedTopics && savedTopics.length) state.topics = new Set(savedTopics);
+  state.saved = await jget("kindling.saved",[]);
+  savedN.textContent = state.saved.length;
+  state.mastery = await jget("kindling.mastery",0);
+  masteryN.textContent = state.mastery;
+  renderTopicPills();
+  const verEl=document.getElementById("ver"); if(verEl) verEl.textContent="Kindling v"+KINDLING_VERSION;
+  await bumpStreak();
+  const hasStash = await loadStash();
+  if(hasStash) renderCard();     // instant, offline, free
+  else await ensureCards(true);  // no file → live (needs key/server)
+})();
+</script>
+</body>
+</html>
